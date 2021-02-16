@@ -18,5 +18,13 @@
 	{
 		"name": "Lotte World Tower",
 		"height": "230.16"
+	},
+	{
+		"name": "One World Trade Center",
+		"height": "220"
+	},
+	{
+		"name": "CTF Finance Centre",
+		"height": "200"
 	}
 ]
