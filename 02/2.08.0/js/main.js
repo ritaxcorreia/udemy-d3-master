@@ -12,28 +12,42 @@ d3.json("data/buildings.json")
 		});
 		console.log(data);
 
+		// Defines margins for svg group
+		const MARGIN = { LEFT: 100, RIGHT: 10, TOP: 10, BOTTOM: 100 };
+		const WIDTH = 600 - MARGIN.LEFT - MARGIN.RIGHT;
+		const HEIGHT = 400 - MARGIN.TOP - MARGIN.BOTTOM;
+
 		// Map chart area
 		const svg = d3
 			.select("#chart-area")
 			.append("svg")
-			.attr("width", 600)
-			.attr("height", 600);
+			.attr("width", WIDTH + MARGIN.LEFT + MARGIN.RIGHT)
+			.attr("height", HEIGHT + MARGIN.TOP + MARGIN.BOTTOM);
+
+		// Appends Group element to the canvas
+		const g = svg
+			.append("g")
+			.attr("transform", `translate(${MARGIN.LEFT}, ${MARGIN.TOP})`);
 
 		const x = d3
 			.scaleBand()
 			.domain(data.map((d) => d.name))
-			// .domain([d3.min(data, (d) => d.name), d3.max(data, (d) => d.name)])
-			.range([0, 400])
+			.range([0, WIDTH])
 			.paddingInner(0.3)
 			.paddingOuter(0.1);
 
 		const y = d3
 			.scaleLinear()
 			.domain([0, d3.max(data, (d) => d.height)])
-			.range([0, 400]);
+			.range([0, HEIGHT]);
+
+		// Defines the axes
+		const xAxisCall = d3.axisBottom(x);
+
+		const yAxisCall = d3.axisLeft(y);
 
 		// Generates data visualisation as a bar chart
-		const bars = svg.selectAll("rect").data(data);
+		const bars = g.selectAll("rect").data(data);
 
 		bars.enter()
 			.append("rect")
