@@ -50,51 +50,84 @@ d3.json("data/buildings.json")
 
 		const x = d3
 			.scaleBand()
-			.domain(data.map((d) => d.name))
 			.range([0, WIDTH])
 			.paddingInner(0.3)
 			.paddingOuter(0.1);
 
-		const y = d3
-			.scaleLinear()
-			.domain([0, d3.max(data, (d) => d.height)])
-			.range([HEIGHT, 0]);
+		const y = d3.scaleLinear().range([HEIGHT, 0]);
 
-		// Defines the axes
-		const xAxisCall = d3.axisBottom(x);
-		g.append("g")
+		const xAxisGroup = g
+			.append("g")
 			.attr("class", "x axis")
-			.attr("transform", `translate(0, ${HEIGHT})`)
-			.call(xAxisCall)
-			.selectAll("text")
-			.attr("y", "10")
-			.attr("x", "-5")
-			.attr("text-anchor", "end")
-			.attr("transform", "rotate(-40)");
+			.attr("transform", `translate(0, ${HEIGHT})`);
 
-		const yAxisCall = d3
-			.axisLeft(y)
-			.ticks(3)
-			.tickFormat((d) => d + "m");
+		const yAxisGroup = g.append("g").attr("class", "y axis");
 
-		g.append("g").attr("class", "y axis").call(yAxisCall);
+		// Setting an interval makes sure our visualisation is updated every second, in a continuous loop. If the data changes, the data visualisation will refresh every second
+		d3.interval(() => {
+			update(data);
+		}, 1000);
 
-		// Generates data visualisation as a bar chart
-		const bars = g.selectAll("rect").data(data);
+		update(data);
 
-		bars.enter()
-			.append("rect")
-			.attr("x", (d) => x(d.name))
-			.attr("y", (d) => y(d.height))
-			.attr("height", (d) => HEIGHT - y(d.height))
-			.attr("width", x.bandwidth)
-			.attr("fill", (d) => {
-				if (d.name === "Burj Khalifa") {
-					return "red";
-				} else {
-					return "pink";
-				}
-			});
+		// This is an update function which handles the scale and axes in case the data changes substancially
+		function update(data) {
+			x.domain(data.map((d) => d.name));
+			y.domain([0, d3.max(data, (d) => d.height)]);
+
+			// Defines the axes
+			const xAxisCall = d3.axisBottom(x);
+			xAxisGroup
+				.call(xAxisCall)
+				.selectAll("text")
+				.attr("y", "10")
+				.attr("x", "-5")
+				.attr("text-anchor", "end")
+				.attr("transform", "rotate(-40)");
+
+			const yAxisCall = d3
+				.axisLeft(y)
+				.ticks(3)
+				.tickFormat((d) => d + "m");
+			yAxisGroup.call(yAxisCall);
+
+			// Generates data visualisation as a bar chart (D3 UPDATE PATTERN)
+			// 1. JOIN new data with old elements
+			const bars = g.selectAll("rect").data(data);
+
+			// 2. EXIT old elements not present in new data
+			bars.exit()
+				.attr("fill", "red")
+				.transition(d3.transition().duration(500))
+				.attr("height", 0)
+				.attr("y", y(0))
+				.remove();
+
+			// 3. UPDATE old elements present in new data
+			bars.transition(d3.transition().duration(500))
+				.attr("x", (d) => x(d.name))
+				.attr("y", (d) => y(d.height))
+				.attr("width", x.bandwidth)
+				.attr("height", (d) => HEIGHT - y(d.height));
+
+			// 4. ENTER new elements present in new data
+			bars.enter()
+				.append("rect")
+				.attr("x", (d) => x(d.name))
+				.attr("height", (d) => HEIGHT - y(d.height))
+				.attr("width", x.bandwidth)
+				.attr("fill", (d) => {
+					if (d.name === "Burj Khalifa") {
+						return "red";
+					} else {
+						return "pink";
+					}
+				})
+				.attr("fill-opacity", 0)
+				.transition(d3.transition().duration(500))
+				.attr("fill-opacity", 1)
+				.attr("y", (d) => y(d.height));
+		}
 	})
 	.catch((error) => {
 		console.log(error);
